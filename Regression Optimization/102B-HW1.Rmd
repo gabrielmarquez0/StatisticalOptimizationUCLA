@@ -1,0 +1,505 @@
+---
+title: "Stats 102B - Homework 1"
+author: "Gabriel Marquez"
+date: "2019"
+output: html_document
+---
+
+Problems and questions, Copyright Miles Chen. Do not post or distribute.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Modify this file with your answers and responses.
+
+### Reading:
+
+a. A First Course in Machine Learning [FCML]: Chapter 1
+
+## Part 1: Weighted Least Squares Regression
+
+## Task 1A
+
+Solve exercise 1.11 from page 38 of the textbook.
+
+Hint: define matrix $\mathbf{A}$ be a diagonal matrix of the weights $\alpha_1, ... \alpha_N$ as follows:
+
+$$
+\begin{bmatrix}
+\alpha_1 & 0 & \ldots & 0 \\
+0 & \alpha_2 & \ldots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \ldots & \alpha_N \\
+\end{bmatrix}
+$$
+
+Hint: With this matrix defined, the loss function can be written as:
+
+$$\mathcal{L} = \frac{1}{N} (\mathbf{t} - \mathbf{Xw})^T\mathbf{A}(\mathbf{t} - \mathbf{Xw})$$
+
+Suggestion: Do your work with pencil and paper. Write the dimensions underneath each matrix to make sure you have the order of multiplication correct.
+
+As you work to find your solution, typeset the gradient of the loss w.r.t. $\mathbf{w}$
+
+$$\frac{\partial \mathcal{L}}{\partial \mathbf{w}} = \frac{1}{N}((-2\mathbf{t}^T\mathbf{AX})^T + 2\mathbf{X}^T\mathbf{AXw})$$
+
+Finally, typeset your solution for $\mathbf{\hat{w}}$ here:
+
+$$\mathbf{\hat{w}} = (\mathbf{X}^T\mathbf{AX})^{-1}(\mathbf{t}^T\mathbf{AX})^T$$
+
+If you're new to Latex and typesetting, you can visit: https://en.wikibooks.org/wiki/LaTeX/Mathematics for examples to follow.
+
+## Task 1B
+
+Let's see the effect of altering the values of our weights $\alpha$. 
+
+We'll use this following toy data, where x is the values 1 through 4, and t is the values, 1, 3, 2, 4.
+
+```{r}
+x <- c(1,2,3,4)
+t <- c(1,3,2,4)
+```
+
+- We begin by setting our vector of weights all equal. I have already fit a model using `lm()` with the argument `weights`. Go ahead and use the matrix operations from your solution from above to find and print the parameter estimates. They should equal the parameter estimates found via `lm()`
+
+```{r}
+a1 <- c(1,1,1,1)
+model1 <- lm(t ~ x, weights = a1)
+plot(x,t,xlim = c(0,5), ylim = c(0,5), asp=1)
+abline(model1)
+
+print(model1$coefficients)
+
+a <- matrix(c(a1[1], 0, 0, 0, 
+              0, a1[2], 0, 0, 
+              0, 0, a1[3], 0, 
+              0, 0, 0, a1[4]), 
+            nrow = 4)
+x_1 <- cbind(1, x)
+
+## your code to make the matrices and find the parameter estimates
+coeff1_1 <- solve(t(x_1) %*% a %*% x_1) %*% t((t(t) %*% a %*% x_1))
+```
+
+- Now we alter the weights. This vector puts large weight on the two inner points (x=2, x= 3), and small weight on the outer points (x=1, x=4). Again, use the matrix operations to find and print the parameter estimates using the provided weights. Compare them against the estimates found via `lm()`. I have plotted the fitted line, comment on the effect of the weights.
+
+```{r}
+a2 <- c(0.1, 5, 5, 0.1) #
+model2 <- lm(t ~ x, weights = a2)
+plot(x,t,xlim = c(0,5), ylim = c(0,5), asp=1)
+abline(model2)
+
+print(model2$coefficients)
+
+a <- matrix(c(a2[1], 0, 0, 0, 
+              0, a2[2], 0, 0, 
+              0, 0, a2[3], 0, 
+              0, 0, 0, a2[4]), 
+            nrow = 4)
+x_1 <- cbind(1, x)
+
+## your code to make the matrices and find the parameter estimates
+coeff1_2 <- solve(t(x_1) %*% a %*% x_1) %*% t((t(t) %*% a %*% x_1))
+```
+
+- We alter the weights again. This time large weight are on the two outer points (x=1, x=4), and small weight on the inner points (x=2, x= 3). Again, use the matrix operations to find and print the parameter estimates using the provided weights. Compare them against the estimates found via `lm()`. Look at the fitted line and comment on the effect of the weights.
+
+```{r}
+a3 <- c(5, 0.1, 0.1, 5) #
+model3 <- lm(t ~ x, weights = a3)
+plot(x,t,xlim = c(0,5), ylim = c(0,5), asp=1)
+abline(model3)
+
+print(model3$coefficients)
+
+a <- matrix(c(a3[1], 0, 0, 0, 
+              0, a3[2], 0, 0, 
+              0, 0, a3[3], 0, 
+              0, 0, 0, a3[4]), 
+            nrow = 4)
+x_1 <- cbind(1, x)
+
+## your code to make the matrices and find the parameter estimates
+coeff1_3 <- solve(t(x_1) %*% a %*% x_1) %*% t((t(t) %*% a %*% x_1))
+```
+
+**- Try to explain Weighted Least Squares regression. What effect would putting a very large weight, say 1000, on a point have on the regression line?  What effect would putting a weight of 0 on a point have on the regression line?**
+
+The first would lead to that value being much larger than the others in the cost function. Consequently, the line would be dragged close to that value in order to minimize the distance between the line and that point. The second would lead to that value being inconsequential. The line would disregard it completely, relying only on the other observed values.
+
+
+## Part 2: OLS Matrix Notation
+
+## Task 2
+
+Review Lecture 1-3. 
+
+We'll take a look at the Chirot dataset which covers the 1907 Romanian Peasant Revolt. General info on the event: https://en.wikipedia.org/wiki/1907_Romanian_Peasants%27_revolt
+
+The data covers 32 counties in Romania, and the response variable is the intensity of the rebellion.
+
+The orginal paper by Daniel Chirot, which provides details of the analysis and variables: https://www.jstor.org/stable/2094430
+
+A basic data dictionary can be found with `help(Chirot)`
+
+```{r}
+library(carData)
+data(Chirot)
+chirot_mat <- as.matrix(Chirot)
+```
+
+We'll do an analysis with matrix operations. We start by extracting the commerce column and creating our $\mathbf{X}$ matrix.
+
+```{r}
+t <- chirot_mat[, 1, drop = FALSE]  # response, keep as a matrix
+x <- chirot_mat[, 2, drop = FALSE]  # commerce column, keep as matrix
+X <- cbind(1, x)
+colnames(X) <- c('1','commerce')
+head(X)
+```
+
+- Use `lm()` to fit the rebellion intensity to matrix X (which has columns for a constant and commercialization). Make sure you only calculate the coefficient for the intercept once.
+
+```{r}
+model2_1 <- lm(t ~ X[,'commerce'])
+summary(model2_1)
+```
+
+- Using only matrix operations, calculate and show the coefficient estimates. Verify that they match the estimates from `lm()`.
+
+```{r}
+# ... your code ...
+coeff2_1 <- solve(t(X) %*% X) %*% t(X) %*% t
+coeff2_1
+```
+
+- Create another matrix (call it X_ct) with three columns: a constant, variable commerce, variable tradition. Print the head of this matrix.
+
+```{r}
+X_ct <- chirot_mat[, c(2,3), drop = FALSE]
+X_ct <- cbind(1, X_ct)
+colnames(X_ct) <- c('1','commerce', 'tradition')
+head(X_ct)
+```
+
+- Using matrix operations, calculate and show the coefficient estimates of the model with the variables commerce and tradition.
+
+```{r}
+coeff2_2 <- solve(t(X_ct) %*% X_ct) %*% t(X_ct) %*% t
+coeff2_2
+```
+
+- Create another matrix (call it X_all) with all of the x variables (plus a constant). Print the head of this matrix. Using matrix operations, calculate and show the coefficient estimates of the model with all the variables.
+
+```{r}
+X_all <- chirot_mat[, c(2, 3, 4, 5), drop = FALSE]
+X_all <- cbind(1, X_all)
+colnames(X_all) <- c('1','commerce', 'tradition', 'midpeasant', 'inequality')
+head(X_all)
+
+coeff2_3 <- solve(t(X_all) %*% X_all) %*% t(X_all) %*% t
+coeff2_3
+```
+
+-  Using matrix operations, calculate the fitted values for all three models. (No need to print out the fitted values.) Create plots of fitted value vs actual value for each model (there will be three plots). Be sure to provide a title for each plot.
+
+```{r}
+fitted2_1 <- X %*% coeff2_1
+fitted2_2 <- X_ct %*% coeff2_2
+fitted2_3 <- X_all %*% coeff2_3
+
+par(mfrow = c(1,3))
+plot(fitted2_1, t, asp = 1, main = "Model 1", xlab = "Predicted", ylab = "Actual")
+plot(fitted2_2, t, asp = 1, main = "Model 2", xlab = "Predicted", ylab = "Actual")
+plot(fitted2_3, t, asp = 1, main = "Model 3", xlab = "Predicted", ylab = "Actual")
+```
+
+- Now that you have calculated the columns of fitted values, find the Residual Sum of Squares and the R-squared values of the three models. Which model has the smallest RSS? (RSS is the sum of (actual - fitted)^2. R-sq is the correlation between actual and fitted, squared.)
+
+```{r}
+RSS2_1 <- sum((t - fitted2_1)^2)
+RSS2_2 <- sum((t - fitted2_2)^2)
+RSS2_3 <- sum((t - fitted2_3)^2)
+
+R_sq_1 <- cor(t, fitted2_1)
+R_sq_2 <- cor(t, fitted2_2)
+R_sq_3 <- cor(t, fitted2_3)
+
+comparison2 <- matrix(c(RSS2_1, RSS2_2, RSS2_3, R_sq_1, R_sq_2, R_sq_3),
+                      nrow = 2, byrow = TRUE)
+
+dimnames(comparison2) <- list(c("RSS", "R^2"), c("Model 1", "Model 2", "Model 3"))
+
+knitr::kable(comparison2)
+
+```
+
+This shows ust that the RSS of the third model - incoporating all predictor linearly - was the lowest. 
+Additionally, that model also displayed the highest correlation between the actual and fitted values.
+
+## Part 3: Cross-Validation
+
+We can use cross-validation to evaluate the predictive performance of several competing models.
+
+I will have you manually implement leave-one-out cross-validation from scratch first, and then use the built-in function in R.
+
+We will use the dataset `ironslag` from the package `DAAG` (a companion library for the textbook Data Analysis and Graphics in R).
+
+The description of the data is as follows: The iron content of crushed blast-furnace slag can be determined by a chemical test at a laboratory or estimated by a cheaper, quicker magnetic test. These data were collected to investigate the extent to which the results of a chemical test of iron content can be predicted from a magnetic test of iron content, and the nature of the relationship between these quantities. [Hand, D.J., Daly, F., et al. (1993) __A Handbook of Small Data Sets__]
+
+The `ironslag` data has 53 observations, each with two values - the measurement using the chemical test and the measurement from the magnetic test.
+
+We can start by fitting a linear regression model $y_n = w_0 + w_1 x_n + \epsilon_n$. A quick look at the scatterplot seems to indicate that the data may not be linear.
+
+```{r linear_model}
+# install.packages("DAAG") # if necessary
+library(DAAG)
+x <- seq(10,40, .1) # a sequence used to plot lines
+
+L1 <- lm(magnetic ~ chemical, data = ironslag)
+plot(ironslag$chemical, ironslag$magnetic, main = "Linear fit", pch = 16)
+yhat1 <- L1$coef[1] + L1$coef[2] * x
+lines(x, yhat1, lwd = 2, col = "blue")
+```
+
+In addition to the linear model, fit the following models that predict the magnetic measurement (Y) from the chemical measurement (X).
+
+Quadratic: $y_n = w_0 + w_1 x_n + w_2 x_n^2 + \epsilon_n$
+
+Exponential: $\log(y_n) = w_0 + w_1 x_n + \epsilon_n$, equivalent to $y_n = \exp(w_0 + w_1 x_n + \epsilon_n)$
+
+log-log: $\log(y_n) = w_0 + w_1 \log(x_n)  + \epsilon_n$
+
+## Task 3A
+
+```{r other_models}
+# I've started each of these for you. 
+# Your job is to create the plots with fitted lines.
+
+par(mfrow = c(2,2))
+
+L2 <- lm(magnetic ~ chemical + I(chemical^2), data = ironslag)
+yhat2 <- L2$coef[1] + L2$coef[2] * x + L2$coef[3] * (x^2)
+plot(ironslag$chemical, ironslag$magnetic, main = "Quadratic fit", pch = 16)
+lines(x, yhat2, lwd = 2, col = 'blue')
+
+L3 <- lm(log(magnetic) ~ chemical, data = ironslag)
+yhat3 <- L3$coef[1] + L3$coef[2] * x
+plot(ironslag$chemical, ironslag$magnetic, main = "Logarithmic fit 1", pch = 16)
+lines(x, exp(yhat3), lwd = 2, col = 'blue')
+# when plotting the fitted line for this one, create estimates of log(y-hat) linearly
+# then exponentiate log(y-hat)
+
+L4 <- lm(log(magnetic) ~ log(chemical), data = ironslag)
+yhat4 <- L4$coef[1] + L4$coef[2] * log(x)
+plot(log(ironslag$chemical), log(ironslag$magnetic), main = "Logarithmic fit 2", pch = 16)
+lines(log(x), yhat4, lwd = 2, col = 'blue')
+# for this one, use plot(log(chemical), log(magnetic))
+# the y-axis is now on the log-scale, so you can create and plot log(y-hat) directly
+# just remember that you'll use log(x) rather than x directly
+```
+
+
+## Task 3B: Leave-one-out Cross validation
+
+You will now code leave-one-out cross validation. In LOOCV, we remove one data point from our data set. We fit the model to the remaining 52 data points. With this model, we make a prediction for the left-out point. We then compare that prediction to the actual value to calculate the squared error. Once we find the squared error for all 53 points, we can take the mean to get a cross-validation error estimate of that model.
+
+To test out our four models, we will build a loop that will remove one point of data at a time. Thus, we will make a `for(i in 1:53)` loop. For each iteration of the loop, we will fit the four models on the remaining 52 data points, and make a prediction for the remaining point.
+
+```{r loocv}
+
+error_model1 <- rep(NA, 53)
+error_model2 <- rep(NA, 53)
+error_model3 <- rep(NA, 53)
+error_model4 <- rep(NA, 53)
+
+for(i in 1:53){
+  
+  # write a line to select the ith line in the data
+  # store this line as the 'validation' case
+  # store the remaining as the 'training' data
+  validation <- ironslag[i, , drop = TRUE]
+  training <- ironslag[-i, ]
+  
+  # fit the four models and calculate the prediction error for each one
+  # hint: it will be in the form
+  # model1 <- lm(magnetic ~ chemical, data = training)
+  # fitted_value <- predict(model1, test_case)
+  # error_model1[i] <- (validation_actual_value - fitted_value)^2
+  # ...
+  # model2 <- 
+  # ...
+  # ...
+  # for models where you are predicting log(magnetic), you'll want to 
+  # exponentiate the fitted value before you compare it to the validation case 
+  # error[i] <- (validation_actual_value - exp(fitted_value))^2
+  model1 <- lm(magnetic ~ chemical, data = training)
+  fitted_value <- predict(model1, validation)
+  error_model1[i] <- (validation[[2]] - fitted_value) ^2
+  
+  model2 <- lm(magnetic ~ chemical + I(chemical^2), data = training)
+  fitted_value <- predict(model2, validation)
+  error_model2[i] <- (validation[[2]] - fitted_value) ^2
+  
+  model3 <- lm(log(magnetic) ~ chemical, data = training)
+  fitted_value <- predict(model3, validation)
+  error_model3[i] <- (validation[[2]] - exp(fitted_value)) ^2
+  
+  model4 <- lm(log(magnetic) ~ log(chemical), data = training)
+  fitted_value <- predict(model4, validation)
+  error_model4[i] <- (validation[[2]] - exp(fitted_value)) ^2
+  
+
+}
+
+
+# once all of the errors have been calculated, find the mean squared error
+# ...
+# mean(error_model1)
+mean_squared_errors3 <- matrix(c(mean(error_model1), mean(error_model2), mean(error_model3), mean(error_model4)), nrow = 1)
+
+dimnames(mean_squared_errors3) <- list(c("Mean Squared Error"), c("Linear", "Quadratic", "Logarithmic 1", "Logarithmic 2"))
+
+knitr::kable(mean_squared_errors3)
+
+```
+
+**Compare the sizes of the cross validation error to help you decide which model does the best job of predicting the test cases.**
+
+We see here that the lowest mean squared error came from model 2 (the Quadratic Model), indicating that it
+did the best job of predicting test cases.
+
+
+## Task 3C: Cross-validation with R
+
+Now that you have written your cross-validation script from scratch, we can use the built-in functions in R. Library(boot) has the function `cv.glm()` which can be used to estimate cross-validation error.
+
+To make use of `cv.glm()` on the linear models, we must first use `glm()` to fit a generalized linear model to our data. If you do not change the attribute "family" in the function `glm()`, it will fit a linear model
+
+```{r cvwithR, error = TRUE}
+library(boot)
+gL1 <- glm(magnetic ~ chemical, data = ironslag) # equivalent to lm(magnetic ~ chemical)
+gL2 <- glm(magnetic ~ chemical + I(chemical^2), data = ironslag)
+gL3 <- glm(log(magnetic) ~ chemical, data = ironslag)
+gL4 <- glm(log(magnetic) ~ log(chemical), data = ironslag)
+
+
+# find the LOOCV CV values for all of the models
+# for the models with log(magnetic), use the argument cost to specify your own 
+# cost function: cost = function(y, yhat) (exp(y) - exp(yhat))^2
+
+loocv1 <- cv.glm(ironslag, gL1)$delta[1]
+loocv2 <- cv.glm(ironslag, gL2)$delta[1]
+loocv3 <- cv.glm(ironslag, gL3, function(y, yhat) (exp(y) - exp(yhat))^2)$delta[1]
+loocv4 <- cv.glm(ironslag, gL4, function(y, yhat) (exp(y) - exp(yhat))^2)$delta[1]
+
+
+loocv_prediction_errors3 <- matrix(c(loocv1, loocv2, loocv3, loocv4), 
+                                   nrow = 1)
+
+
+dimnames(loocv_prediction_errors3) <- list(c("glm Prediction Error"), c("Linear", "Quadratic", "Logarithmic 1", "Logarithmic 2"))
+
+knitr::kable(loocv_prediction_errors3)
+
+```
+
+*Based on the `cv.glm` documentation, the prdiction error is the first estimate of the delta vector that is stored in the returned object. That is what we have printed above.*
+
+Your LOOCV estimates from `cv.glm()` should match your estimates when you coded your algorithm from scratch.
+
+**Based on your Cross Validation scores, which model seems to be the best?**
+
+It seems as though the Quadratic Model has the best fit. The others all have higher mean squared errors, and 
+if we're not taking complexity into account (and it doesn't appear that any of these models are especially 
+complex in the first place), that leads us to the model with the least prediction error. 
+
+## Task 3D: Revisit Chirot
+
+Use `glm()` to fit the three models to the Chirot data. 
+
+- model1: intensity ~ commerce
+- model2: intensity ~ commerce + tradition
+- model3: intensity ~ all other variables
+
+Use `cv.glm()` to calculate the LOOCV scores to compare models. Which model would you select?
+
+```{r}
+# ... your code ...
+
+model1 <- glm(intensity ~ commerce, data = Chirot)
+model2 <- glm(intensity ~ commerce + tradition, data = Chirot)
+model3 <- glm(intensity ~ commerce + tradition + midpeasant + inequality, data = Chirot)
+
+loocv1 <- cv.glm(Chirot, model1)$delta[1]
+loocv2 <- cv.glm(Chirot, model2)$delta[1]
+loocv3 <- cv.glm(Chirot, model3)$delta[1]
+
+loocv_prediction_errors3_2 <- matrix(c(loocv1, loocv2, loocv3), 
+                                   nrow = 1)
+
+dimnames(loocv_prediction_errors3_2) <- list(c("glm Prediction Error"), c("Commerce", "Commerce/Tradition", "All"))
+
+knitr::kable(loocv_prediction_errors3_2)
+
+```
+
+## Part 4: Using R's `optim()` function
+
+The `optim()` function in R is quite versatile and can be used to minimize a wide range of functions using a variety of methods. The default method, the Nelder-Mead simplex algorithm, is a numeric method that works quite well for multidimensional functions. Other methods, like BFGS which uses a modified version of gradient descent, are included and are also quite powerful.
+
+We will do an exercises to use `optim()` in to minimize the loss function in linear regression.
+
+We'll use a synthetic data set.
+
+```{r}
+x <- 1:100
+set.seed(1)
+e <- rnorm(100, 0, 40)
+t <- 30 + 3.4 * x + e   # the true slope is 3.4, the true intercept is 30
+coefs <- coef(lm(t~x))  # the coefficients from using lm
+print(coefs)  #if you use set.seed(1), this should be 35.266629, 3.381958
+plot(x,t)
+abline(coef = coefs, col = "red")
+```
+
+## Task 4: Use `optim()` to minimize the sum of squared residuals in linear regression
+
+For the first task, we define the loss function as the sum of squared residuals:
+
+$$\mathcal{L} = F(w_0, w_1) = \sum_{n=1}^{N}{(t_n - \hat{t}_n)^2}$$
+
+Where $hat{t}$ is the predicted value from the linear model: $t_i = w_0 + w_1 x_i$
+
+We can also use matrix notation:
+
+$$\mathcal{L} = F(\mathbf{w}) = (\mathbf{t} - \mathbf{Xw})^T(\mathbf{t} - \mathbf{Xw})$$
+
+Write your loss function as a function of the vector `par` which will have a lenght of 2. The vector par will contain the current estimates of the intercept and slope. Treat the data (`x` and `t`) as fixed quantities that are available in the global environment. 
+
+The function will return a single value: the sum of squared residuals.
+
+```{r}
+par <- c(31, 3.4)
+loss <- function(par){
+  # use x, and par to create t-hat values
+  # take the difference between t and t-hat and sum the squares
+  # return the total sum of squared residuals
+  mean((t - (par[1] + par[2] * x))^2)
+
+  # ...or... create the necessary matrices and compute the total sum of squares
+}
+```
+
+The following chunk runs optim and returns the results. The arguments it takes in is the initial values of `par`, and the function that it is trying to minimize. I also specify the method 'BFGS' which uses a version of gradient descent as the numeric algorithm to optimize the function.
+
+```{r, error = TRUE}
+results <- optim(par = c(0,1), fn = loss, method = 'BFGS')
+results$par
+
+lm(t ~ x)$coef
+```
+
+When we look at the results and the values of the parameters that minimize the loss function, they should match the coefficients estimated by `lm()`.
+
